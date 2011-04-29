@@ -61,8 +61,26 @@ class PortableExecutable
         enforce(input.seekable, "The input stream should be seekable");
         read(input);
     }
-    
-    
+
+
+    ubyte[] getCode()
+    {
+        immutable uint baseOfCode = getOptionalHeaderField!("baseOfCode");
+        //immutable uint sizeOfCode = getOptionalHeaderField!("sizeOfCode");
+        //TODO: according to specification, the code can be split into multiple sections
+
+        foreach (i, sectionHeader; sectionHeaderEntries)
+        {
+            if (sectionHeader.virtualAddress == baseOfCode)
+            {
+                return sections[i][0 .. sectionHeader.virtualSize];
+            }
+        }
+
+        throw new Exception("Could not find code section");
+    }
+
+
     private void read(Stream input)
     in
     {
@@ -426,4 +444,5 @@ unittest
     scope auto pe = new PortableExecutable(istream);
 
     assert(pe.msDosHeader.newHeaderOffset == 184);
+    assert(pe.getCode() == [51, 192, 195]);
 }
