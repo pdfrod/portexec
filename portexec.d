@@ -4,6 +4,13 @@
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
+/**
+ * Utilities to manipulate the Portable Executable format.
+ * 
+ * Portable Executable is the format used in Windows executable files (.exe).
+ * This library is based on the Microsoft Portable Executable and Common Object
+ * File Format Specification, Revision 8.2 - September 21, 2010
+ */
 module portexec;
 
 import std.algorithm;
