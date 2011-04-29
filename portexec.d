@@ -22,6 +22,10 @@ import std.traits;
 import std.zlib;
 
 
+/**
+ * A PortableExecutable object includes all the necessary data structures and
+ * methods to parse, manipulate and output a Portable Execute file.
+ */
 class PortableExecutable
 {
     immutable PE_SIGNATURE= "PE\0\0";
