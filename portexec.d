@@ -84,6 +84,7 @@ class PortableExecutable
         readOptionalHeader(input);
         readDataDirectories(input);
         readSectionTable(input);
+        readSections(input);
     }
 
 
@@ -148,8 +149,31 @@ class PortableExecutable
             readInput(input, sectionHeaderEntry);
         }
     }
-    
-    
+
+
+    private void readSections(Stream input)
+    in
+    {
+        assert(input.seekable);
+        // Section Table must have been read
+    }
+    body
+    {
+        sections = new ubyte[][sectionHeaderEntries.length];
+
+        foreach (i, ref sectionHeaderEntry; sectionHeaderEntries)
+        {
+            //TODO: ensure pointerToRawData is within file bounds
+            if (sectionHeaderEntry.pointerToRawData > 0)
+            {
+                input.position(sectionHeaderEntry.pointerToRawData);
+                sections[i] = new ubyte[sectionHeaderEntry.sizeOfRawData];
+                input.read(sections[i]);
+            }
+        }
+    }
+
+
     bool isPe32()
     {
         return peMagicNumber == PeMagicNumber.PE32;
