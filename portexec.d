@@ -29,33 +29,33 @@ import std.zlib;
 class PortableExecutable
 {
     immutable PE_SIGNATURE= "PE\0\0";
-    
+
     PeMagicNumber peMagicNumber;
-    
+
     MsDosHeader msDosHeader;
     ubyte[] msDosStub;
     CoffFileHeader coffFileHeader;
-    
+
     //TODO: only one type of header is in use for a given file. Find a more space-efficient solution
     OptionalHeaderPe32 optionalHeaderPe32;
     OptionalHeaderPe32Plus optionalHeaderPe32Plus;
-    
+
     DataDirectory[] dataDirectories;
     SectionHeaderEntry[] sectionHeaderEntries;
-    
+
     ubyte[][] sections;
-    
-    
+
+
     this() {}
-    
-    
+
+
     this(string filename)
     {
         scope File file = new File(filename);
         read(file);
     }
-    
-    
+
+
     this(Stream input)
     {
         enforce(input.seekable, "The input stream should be seekable");
@@ -72,21 +72,21 @@ class PortableExecutable
     {
         readInput(input, msDosHeader);
         enforce(msDosHeader.signature == MsDosHeader.SIGNATURE, "Invalid Portable Executable file");
-        
+
         input.position(msDosHeader.newHeaderOffset);
         enforce(input.readString(PE_SIGNATURE.length) == PE_SIGNATURE, "Invalid Portable Executable file");
-        
+
         readInput(input, coffFileHeader);
-        
+
         readInput(input, peMagicNumber);
         input.seekCur(-to!(int)(PeMagicNumber.sizeof));
-        
+
         readOptionalHeader(input);
         readDataDirectories(input);
         readSectionTable(input);
     }
-    
-    
+
+
     private void readOptionalHeader(Stream input)
     in
     {
@@ -108,8 +108,8 @@ class PortableExecutable
                 throw new Exception("Invalid Portable Executable file");
         }
     }
-    
-    
+
+
     private void readDataDirectories(Stream input)
     in
     {
@@ -119,16 +119,16 @@ class PortableExecutable
     body
     {
         immutable uint numberOfRvaAndSizes = getOptionalHeaderField!("numberOfRvaAndSizes");
-        
+
         dataDirectories = new DataDirectory[numberOfRvaAndSizes];
-        
+
         foreach (ref dataDirectory; dataDirectories)
         {
             readInput(input, dataDirectory);
         }
     }
-    
-    
+
+
     private void readSectionTable(Stream input)
     in
     {
@@ -139,10 +139,10 @@ class PortableExecutable
     {
         immutable uint tablePosition = msDosHeader.newHeaderOffset + PE_SIGNATURE.length +
             CoffFileHeader.sizeof + coffFileHeader.sizeOfOptionalHeader;
-        
+
         input.position(tablePosition);
         sectionHeaderEntries = new SectionHeaderEntry[coffFileHeader.numberOfSections];
-        
+
         foreach (ref sectionHeaderEntry; sectionHeaderEntries)
         {
             readInput(input, sectionHeaderEntry);
@@ -154,15 +154,15 @@ class PortableExecutable
     {
         return peMagicNumber == PeMagicNumber.PE32;
     }
-    
-    
+
+
     auto getOptionalHeaderField(string name)()
     {
         return isPe32 ? __traits(getMember, this.optionalHeaderPe32, name) :
             __traits(getMember, this.optionalHeaderPe32Plus, name);
     }
-    
-    
+
+
     void setOptionalHeaderField(string name, Type)(Type value)
     {
         if (isPe32)
@@ -186,7 +186,7 @@ pure uint alignedSize(const uint size, const uint alignment)
 struct MsDosHeader
 {
     immutable SIGNATURE= "MZ";
-    
+
     char[2] signature;
     ubyte[58] data;
     uint newHeaderOffset;
@@ -260,10 +260,10 @@ struct OptionalHeaderPe32
     uint sizeOfUninitializedData;
     uint addressOfEntryPoint;
     uint baseOfCode;
-    
-    uint baseOfData;    
+
+    uint baseOfData;
     uint imageBase;
-    
+
     uint sectionAlignment;
     uint fileAlignment;
     ushort majorOperatingSystemVersion;
@@ -278,12 +278,12 @@ struct OptionalHeaderPe32
     uint checkSum;
     ushort subsystem; //TODO
     ushort dllCharacteristics; //TODO
-    
+
     uint sizeOfStackReserve;
     uint sizeOfStackCommit;
     uint sizeOfHeapReserve;
     uint sizeOfHeapCommit;
-    
+
     uint loaderFlags;
     uint numberOfRvaAndSizes;
 }
@@ -299,9 +299,9 @@ struct OptionalHeaderPe32Plus
     uint sizeOfUninitializedData;
     uint addressOfEntryPoint;
     uint baseOfCode;
-    
+
     ulong imageBase;
-    
+
     uint sectionAlignment;
     uint fileAlignment;
     ushort majorOperatingSystemVersion;
@@ -316,12 +316,12 @@ struct OptionalHeaderPe32Plus
     uint checkSum;
     ushort subsystem;
     ushort dllCharacteristics;
-    
+
     ulong sizeOfStackReserve;
     ulong sizeOfStackCommit;
     ulong sizeOfHeapReserve;
     ulong sizeOfHeapCommit;
-    
+
     uint loaderFlags;
     uint numberOfRvaAndSizes;
 }
@@ -400,6 +400,6 @@ unittest
     const ubyte[] peFile = cast(ubyte[]) uncompress(cast(void[])compressedPeFile);
     scope auto istream = new TArrayStream!(ubyte[])(peFile.dup);
     scope auto pe = new PortableExecutable(istream);
-    
+
     assert(pe.msDosHeader.newHeaderOffset == 184);
 }
